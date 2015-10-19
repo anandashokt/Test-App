@@ -8,9 +8,23 @@
 
 #import "ViewController.h"
 #import "UIView+AutolayoutHelper.h"
+#import "ContentsTableViewCell.h"
+#import "ServiceHelper.h"
+#import "FeedsData.h"
+#import "Reachability.h"
+#import "ConstantFile.h"
 
 
 @interface ViewController ()
+{
+    NSMutableArray *feedsArray;
+    UIActivityIndicatorView *activityIndicator;
+    ContentsTableViewCell *cell;
+
+}
+
+@property(strong, nonatomic) NSMutableArray *feedsArray;
+
 
 @end
 
@@ -19,17 +33,17 @@
 @synthesize feedsTableView;
 @synthesize feedsArray;
 
-ContentsTableViewCell *cell;
-static NSString *CellIdentifier = @"ContentsTableViewCell";
-- (void)viewDidLoad {
+#pragma mark - ==========UIViewController Delegates Methods==============
+- (void)viewDidLoad
+{
     [super viewDidLoad];
     
-    
-    self.title=@"Telstra";
+    self.title=kTitle;
     
     feedsArray=[[NSMutableArray alloc]init];
     
-    self.feedsTableView = [UITableView new];
+    self.feedsTableView = [[UITableView alloc]init];
+    
     self.feedsTableView.delegate=self;
     self.feedsTableView.dataSource=self;
     self.feedsTableView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -37,20 +51,23 @@ static NSString *CellIdentifier = @"ContentsTableViewCell";
     [self.view fitView:self.feedsTableView];
     
     activityIndicator=[[UIActivityIndicatorView alloc]initWithFrame:CGRectMake(self.view.center.x-25, self.view.center.y-25, 50, 50)];
+    
     activityIndicator.color=[UIColor blackColor];
+    
     [self.view addSubview:activityIndicator];
+    
     activityIndicator.hidden=YES;
     
     UIBarButtonItem *flipButton = [[UIBarButtonItem alloc]
-                                   initWithTitle:@"Refresh"
+                                   initWithTitle:kTitleRefreshBtn
                                    style:UIBarButtonItemStylePlain
                                    target:self
-                                   action:@selector(loadData)];
+                                   action:@selector(getDataFromServer)];
     self.navigationItem.rightBarButtonItem = flipButton;
     
-    self.feedsTableView.estimatedRowHeight = 110.0;
+    self.feedsTableView.estimatedRowHeight = kTableRowHeight;
+    
     self.feedsTableView.rowHeight = UITableViewAutomaticDimension;
-    // Do any additional setup after loading the view.
 }
 
 -(void)viewWillAppear:(BOOL)animated
@@ -61,24 +78,30 @@ static NSString *CellIdentifier = @"ContentsTableViewCell";
     
     self.feedsTableView.rowHeight = UITableViewAutomaticDimension;
     
-    [self loadData];
+    [self getDataFromServer];
 
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
+    
     [self.feedsTableView reloadData];
 }
 
+
+
+#pragma mark - ==========Webservice call and Data consuming on UI==============
+// -------------------------------------------------------------------------------
 /*
- @method        loadData
+ @method        getDataFromServer
  @abstract      gets the data from server and load in to UITableview
  @param         nil
  @return        void
  */
+// -------------------------------------------------------------------------------
 
--(void)loadData
+-(void)getDataFromServer
 {
     [UIApplication sharedApplication].networkActivityIndicatorVisible=YES;
     BOOL isConnectedToInternet = [[Reachability reachabilityForInternetConnection] currentReachabilityStatus] != NotReachable;
@@ -87,8 +110,8 @@ static NSString *CellIdentifier = @"ContentsTableViewCell";
     self.view.userInteractionEnabled=NO;
     if (isConnectedToInternet) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),  ^{
-            feedsArray=[HelperClass feedsList];
-            
+            feedsArray=[ServiceHelper feedsList:^(NSError *error){
+            }];;
             dispatch_async(dispatch_get_main_queue(), ^{
                 [UIApplication sharedApplication].networkActivityIndicatorVisible=NO;
                 [activityIndicator stopAnimating];
@@ -99,22 +122,19 @@ static NSString *CellIdentifier = @"ContentsTableViewCell";
         });
     }else
     {
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Oops!" message:@"Please check your network connection." delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil];
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:kErrorMessageTitle message:kErrorMessageForNetworkConnection delegate:self cancelButtonTitle:kTextOK otherButtonTitles:nil];
         [alert show];
     }
     
 }
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
 
+
+#pragma mark - ==========UITableView Delegats Methods====================
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     // The number of sections is based on the number of items in the data property list.
     return 1;
 }
-
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
@@ -123,84 +143,75 @@ static NSString *CellIdentifier = @"ContentsTableViewCell";
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    
-    return 110;
-    
+    FeedsData *feedsDetail=[feedsArray objectAtIndex:indexPath.row];
+    CGRect textHeight = [feedsDetail.feedDescription boundingRectWithSize:CGSizeMake(self.view.frame.size.width-160, 0)
+                                                         options:NSStringDrawingUsesLineFragmentOrigin
+                                                      attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:14]}
+                                                         context:nil];
+    if (textHeight.size.height<50) {
+        return kTableRowHeight-50;
+    }else if (textHeight.size.height<110) {
+        return kTableRowHeight;
+    }else
+    {
+       return textHeight.size.height+40;
+    }
 }
 
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    static NSString *CellIdentifier = @"ContentsTableViewCell";
+    static NSString *CellIdentifier = kCellIdentifier;
     
     cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    
     if (cell == nil)
     {
         cell = [[ContentsTableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
     }
     
+    
+    cell.itemTitle.preferredMaxLayoutWidth = CGRectGetWidth(cell.itemTitle.frame);
+    cell.itemDescription.preferredMaxLayoutWidth = CGRectGetWidth(cell.itemDescription.frame);
+    
     if (indexPath.row<[self.feedsArray count]) {
         FeedsData *feedsDetail=[feedsArray objectAtIndex:indexPath.row];
         
         // set default user image while image is being downloaded
-        [cell.itemImage setImage:[UIImage imageNamed:@"1.png"]];
+        [cell.itemImage setImage:[UIImage imageNamed:kErrorImage]];
         
         if (feedsDetail.imageCache) {
             cell.itemImage.image = feedsDetail.imageCache;
         } else {
             // download the image asynchronously
-            NSURL *imageURL = [NSURL URLWithString:feedsDetail.feedImageUrl];
-            [self downloadImageWithURL:imageURL completionBlock:^(BOOL succeeded, UIImage *image) {
-                if (succeeded) {
-                    // change the image in the cell
-                    cell.itemImage.image = image;
-                    
-                    feedsDetail.imageCache=image;
-                }
-            }];
+            if (feedsDetail.feedImageUrl.length==0) {
+                cell.itemImage.image=[UIImage imageNamed:kErrorImage];
+                feedsDetail.imageCache=[UIImage imageNamed:kErrorImage];
+            }else
+            {
+                NSURL *imageURL = [NSURL URLWithString:feedsDetail.feedImageUrl];
+                [ServiceHelper downloadImageWithURL:imageURL completionBlock:^(BOOL succeeded, UIImage *image) {
+                    if (succeeded) {
+                        // change the image in the cell
+                        cell.itemImage.image = image;
+
+                        feedsDetail.imageCache=image;
+                    }
+                }];
+            }
         }
         
         [cell.itemTitle setText:feedsDetail.feedTitle];
         [cell.itemDescription setText:feedsDetail.feedDescription];
+       
     }
     
     return cell;
-    
 }
 
-/*
- @method        downloadImageWIthURL
- @abstract      gets the image from server and load in to UITableview
- @param         ImageUrl
- @return        void
- */
-
-- (void)downloadImageWithURL:(NSURL *)url completionBlock:(void (^)(BOOL succeeded, UIImage *image))completionBlock
-{
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
-    [NSURLConnection sendAsynchronousRequest:request
-                                       queue:[NSOperationQueue mainQueue]
-                           completionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
-                               if ( !error )
-                               {
-                                   UIImage *image = [[UIImage alloc] initWithData:data];
-                                   completionBlock(YES,image);
-                               } else{
-                                   completionBlock(NO,nil);
-                               }
-                           }];
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
 }
-
-
-
-/*
- #pragma mark - Navigation
- 
- // In a storyboard-based application, you will often want to do a little preparation before navigation
- - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
- // Get the new view controller using [segue destinationViewController].
- // Pass the selected object to the new view controller.
- }
- */
 
 @end

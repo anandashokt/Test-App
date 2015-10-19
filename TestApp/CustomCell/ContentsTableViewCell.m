@@ -24,7 +24,7 @@
 {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
-    
+        
         itemImage = [[UIImageView alloc] init];
         self.contentView.translatesAutoresizingMaskIntoConstraints = NO;
         [self fitView:self.contentView];
@@ -52,27 +52,29 @@
         
         // itemTitle autolayouts
         float padding = 5.0;
-        NSLayoutConstraint * titleWidthConstraint = [NSLayoutConstraint constraintWithItem:itemTitle attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeWidth multiplier:1.0 constant:0];
+                
         
-        NSLayoutConstraint * titelHeightConstraint = [NSLayoutConstraint constraintWithItem:itemTitle attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeHeight multiplier:1.0 constant:15.0];
+        NSLayoutConstraint * titleWidthConstraint = [NSLayoutConstraint constraintWithItem:itemTitle attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:itemImage attribute:NSLayoutAttributeWidth multiplier:1.0 constant:0];
         
-        NSLayoutConstraint * titelTopConstraint = [NSLayoutConstraint constraintWithItem:itemTitle attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeTop multiplier:1.0 constant:padding];
+        NSLayoutConstraint * titelHeightConstraint = [NSLayoutConstraint constraintWithItem:itemTitle attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeHeight multiplier:1.0 constant:40];
+        
+        NSLayoutConstraint * titelTopConstraint = [NSLayoutConstraint constraintWithItem:itemTitle attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeTop multiplier:1.0 constant:0];
         
         NSLayoutConstraint * titelleftConstraint = [NSLayoutConstraint constraintWithItem:itemTitle attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeLeading multiplier:1.0 constant:padding];
         
         [self.contentView addConstraints:@[titelHeightConstraint, titleWidthConstraint, titelleftConstraint, titelTopConstraint]];
         
         // itemImage autolayouts
+        NSLayoutConstraint * imageTopConstraint = [NSLayoutConstraint constraintWithItem:itemImage attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeTop multiplier:1.0 constant:padding];
+        
         NSLayoutConstraint * imageWidthConstraint = [NSLayoutConstraint constraintWithItem:itemImage attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeWidth multiplier:1.0 constant:150];
         
         NSLayoutConstraint * imageHeightConstraint = [NSLayoutConstraint constraintWithItem:itemImage attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeHeight multiplier:1.0 constant:100];
         
-        NSLayoutConstraint * imageCenterYConstraint = [NSLayoutConstraint constraintWithItem:itemImage attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0];
-
         NSLayoutConstraint * imageTrailingConstraint = [NSLayoutConstraint constraintWithItem:itemImage attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeTrailing multiplier:1.0 constant:-padding];
-
-        [self.contentView addConstraints:@[imageWidthConstraint, imageHeightConstraint, imageCenterYConstraint, imageTrailingConstraint]];
-
+        
+        [self.contentView addConstraints:@[imageWidthConstraint, imageHeightConstraint, imageTrailingConstraint, imageTopConstraint]];
+        
         // itemDescription autolayouts
         NSLayoutConstraint * descriptionTopConstraint = [NSLayoutConstraint constraintWithItem:itemDescription attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:itemTitle attribute:NSLayoutAttributeBottom multiplier:1.0 constant:padding];
         
@@ -83,6 +85,7 @@
         NSLayoutConstraint * descriptionBottomConstraint = [NSLayoutConstraint constraintWithItem:itemDescription attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeBottomMargin multiplier:1.0 constant:padding];
         
         [self.contentView addConstraints:@[descriptionTopConstraint, descriptionLeadingConstraint, descriptionTrailingConstraint, descriptionBottomConstraint]];
+        
     }
     return self;
 }
@@ -90,10 +93,10 @@
 - (void)layoutSubviews {
     
     [super layoutSubviews];
-    
     [self.contentView setNeedsLayout];
     [self.contentView layoutIfNeeded];
     self.textLabel.preferredMaxLayoutWidth = CGRectGetWidth(self.textLabel.frame);
+    
     
 }
 

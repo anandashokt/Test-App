@@ -7,20 +7,14 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "ContentsTableViewCell.h"
-#import "HelperClass.h"
-#import "FeedsData.h"
-#import "Reachability.h"
 
 @interface ViewController : UIViewController<UITableViewDelegate,UITableViewDataSource>
 {
     UITableView *feedsTableView;
-    NSMutableArray *feedsArray;
-    UIActivityIndicatorView *activityIndicator;
+   
 }
-
 @property(strong, nonatomic) UITableView *feedsTableView;
-@property(strong, nonatomic) NSMutableArray *feedsArray;
+
 
 @end
 

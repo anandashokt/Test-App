@@ -11,6 +11,6 @@
 
 @interface UIView (AutolayoutHelper)
 
-- (void)fitView:(UIView *)view2;
+- (void)fitView:(UIView *)subView;
 
 @end
