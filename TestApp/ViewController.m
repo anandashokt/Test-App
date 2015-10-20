@@ -20,7 +20,7 @@
     NSMutableArray *feedsArray;
     UIActivityIndicatorView *activityIndicator;
     ContentsTableViewCell *cell;
-
+    
 }
 
 @property(strong, nonatomic) NSMutableArray *feedsArray;
@@ -50,11 +50,11 @@
     [self.view addSubview:self.feedsTableView];
     [self.view fitView:self.feedsTableView];
     
-    activityIndicator=[[UIActivityIndicatorView alloc]initWithFrame:CGRectMake(self.view.center.x-25, self.view.center.y-25, 50, 50)];
-    
+    activityIndicator=[[UIActivityIndicatorView alloc]init];
     activityIndicator.color=[UIColor blackColor];
-    
+    activityIndicator.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:activityIndicator];
+    [self.view fitView:activityIndicator];
     
     activityIndicator.hidden=YES;
     
@@ -68,6 +68,8 @@
     self.feedsTableView.estimatedRowHeight = kTableRowHeight;
     
     self.feedsTableView.rowHeight = UITableViewAutomaticDimension;
+    
+    [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(OrientationDidChange:) name:UIDeviceOrientationDidChangeNotification object:nil];
 }
 
 -(void)viewWillAppear:(BOOL)animated
@@ -79,7 +81,7 @@
     self.feedsTableView.rowHeight = UITableViewAutomaticDimension;
     
     [self getDataFromServer];
-
+    
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -145,25 +147,54 @@
 {
     FeedsData *feedsDetail=[feedsArray objectAtIndex:indexPath.row];
     CGRect textHeight = [feedsDetail.feedDescription boundingRectWithSize:CGSizeMake(self.view.frame.size.width-160, 0)
-                                                         options:NSStringDrawingUsesLineFragmentOrigin
-                                                      attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:14]}
-                                                         context:nil];
+                                                                  options:NSStringDrawingUsesLineFragmentOrigin
+                                                               attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:14]}
+                                                                  context:nil];
     if (textHeight.size.height<50) {
         return kTableRowHeight-50;
     }else if (textHeight.size.height<110) {
         return kTableRowHeight;
     }else
     {
-       return textHeight.size.height+40;
+        return textHeight.size.height+40;
     }
 }
 
+-(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cellObj forRowAtIndexPath:(NSIndexPath *)indexPath
+
+{
+    
+    [cellObj setBackgroundColor:[UIColor clearColor]];
+    
+    CAGradientLayer *grad = [CAGradientLayer layer];
+    
+    grad.frame = cellObj.bounds;
+    
+    grad.colors = [NSArray arrayWithObjects:(id)[[UIColor whiteColor] CGColor], (id)[[UIColor lightGrayColor] CGColor], nil];
+    
+    [cellObj setBackgroundView:[[UIView alloc] init]];
+    
+    [cellObj.backgroundView.layer insertSublayer:grad atIndex:0];
+    
+    CAGradientLayer *selectedGrad = [CAGradientLayer layer];
+    
+    selectedGrad.frame = cellObj.bounds;
+    
+    selectedGrad.colors = [NSArray arrayWithObjects:(id)[[UIColor whiteColor] CGColor], (id)[[UIColor lightGrayColor] CGColor], nil];
+    
+    [cellObj setSelectedBackgroundView:[[UIView alloc] init]];
+    
+    [cellObj.selectedBackgroundView.layer insertSublayer:selectedGrad atIndex:0];
+    
+}
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     static NSString *CellIdentifier = kCellIdentifier;
     
     cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    
+    cell.backgroundColor=[UIColor clearColor];
     
     if (cell == nil)
     {
@@ -194,7 +225,7 @@
                     if (succeeded) {
                         // change the image in the cell
                         cell.itemImage.image = image;
-
+                        
                         feedsDetail.imageCache=image;
                     }
                 }];
@@ -203,10 +234,24 @@
         
         [cell.itemTitle setText:feedsDetail.feedTitle];
         [cell.itemDescription setText:feedsDetail.feedDescription];
-       
+        
     }
     
     return cell;
+}
+
+-(void)OrientationDidChange:(NSNotification*)notification
+
+{
+    UIDeviceOrientation Orientation=[[UIDevice currentDevice]orientation];
+    
+    if(Orientation==UIDeviceOrientationLandscapeLeft || Orientation==UIDeviceOrientationLandscapeRight)
+    {
+        [self.feedsTableView reloadData];
+    }else if(Orientation==UIDeviceOrientationPortrait)
+    {
+        
+    }
 }
 
 - (void)didReceiveMemoryWarning {
